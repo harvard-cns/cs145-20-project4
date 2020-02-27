@@ -4,10 +4,11 @@
 
 * Learn to use the monitoring tools and analyze monitoring data on Mininet and P4. These tools will be useful debugging tools for your future projects. 
 * Run monitoring tools	
-	- Getting bandwidth information through pcap traces. Learn to use tcpdump to collect and analyze pcap traces. Understand the overhead associated with getting the pcap traces.
-	- Getting flow size distribution from pcap logs.
 	- Getting latency from applications.
+	- Getting flow size distribution through tcpdump.
+	- Getting traffic rate information through tcpdump.
 	- Getting queue length through P4 registers. Understand the overhead associated with getting the registers.
+	- Implement the counting bloom filter algorithm in P4.
 * Analyze the monitoring data
 	- Why do we get high queue length at times?
 
@@ -99,7 +100,7 @@ Here we use a default value of 100ms as the time gap.
 
 **Traces:** In order to check the flow size distribution for both Memcached and Iperf, we need to generate a trace that separate the traffic of those two applications. Please generate a trace file running Memcached on host `h1-h8`, and running Iperf on host `h9-h16`. The trace lasts for 60 seconds. Name it **trace2.txt**.
 
-**Traffic data collection:** Use `tcpdump` to dump packet information. Note that you need to run `tcpdump` to collect traffic trace for each host. Think about on which interfaces it is required to run `tcpdump`.
+**Traffic data collection:** Use `tcpdump` to dump packet information. Note that you need to run `tcpdump` to collect traffic trace for each host. Think about on which interfaces it is required to run `tcpdump`. You can also use `tcpdump` to read pcap files.
 
 **Analayze the tcpdump data:**
 	You are supposed to write scripts that extract flow size information from the tcpdump traces. The packet information from `tcpdump` looks like
