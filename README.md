@@ -131,8 +131,8 @@ Heavy hitters can significantly impact the network, causing long latencies of me
 Since reading and dumping the queue length of each packet results in large overhead, you are going to record and dump the average queue length within a certain time range. Here are what you need to do:
 
 1. Create a register array named `inport_qlen`, which has enough number of registers so that the it can record the queue length for each interface (port). In other words, `inport_qlen[i]` records the queue length information of the `i`-th interface.
-2. Create another register array named `inport_pkts`, which has the same width as `inport_qlen`. It records the number of packets arrived through each interface.
-3. For each packet arrived at a certain interface, add the queue length to the corresponding register in `inport_qlen`. The queue length is stored in `standard_metadata.enq_qdepth`. Increase the corresponding register in `inport_pkts` as well. 
+2. Create another register array named `inport_packets`, which has the same width as `inport_qlen`. It records the number of packets arrived through each interface.
+3. For each packet arrived at a certain interface, add the queue length to the corresponding register in `inport_qlen`. The queue length is stored in `standard_metadata.enq_qdepth`. Increase the corresponding register in `inport_packets` as well. 
 
 ### Reading Queue Length Periodically
 
