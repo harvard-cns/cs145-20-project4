@@ -253,7 +253,7 @@ In this part, you need to analyze why there is a congestion in the network.
 
 ### Grading
 
-- *40*: the implementation of registers and heavy hitters.
+- *40*: the implementation of registers and heavy hitters, as well as the two register readers.
 - *20*: plotted figures.
 - *40*: answer the questions.
 
