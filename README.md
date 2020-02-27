@@ -92,7 +92,7 @@ Next, send the traffic using the trace file just created.
 
 **Note: We highly encourage you to write scripts for each step of your analysis and write scripts to generate figures. This will allow you to reuse these analysis for debugging your future projects. To make a clean directory structure, please put all your tool codes under the `./tools` directory.**
 
-## Flow Size Distribution
+## Task 3: Flow Size Distribution
 
 In this part, you are expected to analyze the flow size distribution of Memcached and Iperf respectively. A flow is defined as a burst of packets sharing the same "five-tuple": source IP address, destination IP address, source TCP/UDP port number, destination TCP/UDP port number, and protocol (TCP or UDP). If two packets sharing the same five-tuple are separated by a sufficient time gap, then these two packets should belong to two different flows. 
 Here we use a default value of 100ms as the time gap.
@@ -121,7 +121,7 @@ Each line represents a packet. For this analysis, you need to understand the fir
 - How many flows are there in memcached and iperf applications respectively? 
 - After gathering flows from iperf and memcached, what is the minimum percentage of flows that take up more than 80\% flow size? What can you conclude after getting the number?
 
-## Queue Length Registers
+## Task 4: Queue Length Registers
 
 Heavy hitters can significantly impact the network, causing long latencies of memcached requests. When every packet arrives at a switch, the queue length the packet sees is a significant metric for understanding the impact of heavy hitters and evaluating the congestion in the network. Here you are expected to implement P4 codes to read and store queue lengths, and read average queue lengths from a controller. 
 
@@ -162,7 +162,7 @@ You should modify this file in the following way:
 - Draw figures to show the latency of memcached on `h1`. The x axis is the time, and the y axis is the latency. Name it `report/lat_h1.pdf(png)`.
 - Compare the figure of latency and queue length, and answer the question: what is the correlation between the queue length and the latency?
 
-## Heavy Hitter Detection
+## Task 5: Heavy Hitter Detection
 
 The above analysis is offline: collecting data first and analyze it later. Here, we will explore how to capture useful information online with a p4 program. 
 Your job here is to write a heavy hitter detector to run at the switches. 
@@ -207,7 +207,7 @@ The CBF algorithm is as follows.
 - Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? -->
 
 
-## Analyze the Congestion
+## Task 6: Analyze the Congestion
 
 In previous part, you can learn there are long tail latencies for some memcached requests. Those long tail latencies come from congestions in the network, which means there is a long queue in some switches, introducing a long queuing delay for memcached request packets.
 
