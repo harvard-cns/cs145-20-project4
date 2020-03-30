@@ -163,6 +163,10 @@ You should modify this file in the following way:
 - Draw figures to show the latency of memcached on `h1`. The x axis is the time, and the y axis is the latency. Name it `report/lat_h1.pdf(png)`.
 - Compare the figure of latency and queue length, and answer the question: what is the correlation between the queue length and the latency?
 
+### Note
+
+The queue length should be 0 for most of the time, and there could be some spikes on the queue lengths, but the highest average queue length could be as low as 2. It is totally fine if you always get a low number, as long as the number in spikes is larger than 0.
+
 ## Task 5: Heavy Hitter Detection
 
 The above analysis is offline: collecting data first and analyze it later. Here, we will explore how to capture useful information online with a p4 program. 
@@ -197,6 +201,36 @@ The CBF algorithm is as follows.
 **Read the counters**. Write another Python script named `tools/read_hh.py`, which reads the all CBF registers after running the traffic. You only need to check the registers on **ToR switches**, and be aware that each packet goes through only one or two core switch. 
 
 **Collect heavy hitters**. You can use the tcpdump result to get all flows within the traffic, and use the CBF algorithm to read the estimated flow size of the flow. Then you can calculate the list of heavy hitters. If you are confused how to implement the same hash function in Python, please refer to this website [https://github.com/p4lang/tutorials/issues/188].
+
+### Notes
+
+If you are using crc16 and crc32 in your p4 code, then you can create the two hash functions as follows:
+```
+crc16 = crcmod.predefined.mkCrcFun('crc-16')
+crc32 = crcmod.predefined.mkCrcFun('crc-32')
+```
+Then you need to collect the 5-tuple for each flow. You need to first convert each field into integers
+```
+IP address: 10.0.0.1 -> 0x0a000001
+```
+Port numbers and protocol are integers so there is no need to convert.
+Second, you need to convert each integer into byte string with big-endien using the following function.
+```
+def int_to_bytes(value, length):
+    result = []
+
+    for i in range(0, length):
+        result.append(value >> (i * 8) & 0xff)
+
+    result.reverse()
+
+    return bytes(bytearray(result))
+```
+Finally you need to combine the five fields together (sip, dip, sport, sport, protocol) into a 13-byte byte string, and then you can use the two hash functions to calculate the hash value
+```
+idx1 = crc16(s) # s is the string
+idx2 = crc32(s)
+```
 
 ### Questions
 
@@ -240,6 +274,10 @@ In this part, you need to analyze why there is a congestion in the network.
 - For the memcached request you pick up, what is the routing path for it?
 - What are the average queue length for each interface those packets go through?
 - What can you conclude from those observations?
+
+### Note
+
+You do not need to very accurate on the time window. If you can find out and analyze a Memcached packet that suffers long latency in the network, that could be fine.
 
 ## Submission and Grading
 
