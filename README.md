@@ -59,15 +59,15 @@ sudo tcpdump -enn -i <interface_name> > <output file>
 
 The output of tcpdump is in plain text. Like pcap files, the output of tcpdump also includes all packets arriving to the interface.
 
-## Task 1: Implementing UDP and ICMP
+<!-- ## Task 1: Implementing UDP and ICMP
 
 First, you are going to support UDP and ICMP protocols in your ECMP implementation, since previously we only care about TCP packets.
 Different from TCP, UDP does not have congestion control, so UDP packet senders could decide the sending rate themselves. Therefore, UDP traffic could cause congestion persistently.
 ICMP is only used for error-reporting, which is used in `ping` and `traceroute` applications.
 
-We provide you with headers of UDP protocol and ICMP protocol in `p4src/include/extra.p4`, and you need to copy those two headers in your P4 codes. **We are not going to grade your implementation on UDP and ICMP, but later tasks will require the processing logic of UDP and ICMP.**
+We provide you with headers of UDP protocol and ICMP protocol in `p4src/include/extra.p4`, and you need to copy those two headers in your P4 codes. **We are not going to grade your implementation on UDP and ICMP, but later tasks will require the processing logic of UDP and ICMP.** -->
 
-## Task 2: Analyze the Latency of Applications
+## Task 1: Analyze the Latency of Applications
 
 You are going to analyze the latency of applications in this task.
 
@@ -93,7 +93,7 @@ Next, send the traffic using the trace file just created.
 
 **Note: We highly encourage you to write scripts for each step of your analysis and write scripts to generate figures. This will allow you to reuse these analysis for debugging your future projects. To make a clean directory structure, please put all your tool codes under the `./tools` directory.**
 
-## Task 3: Flow Size Distribution
+## Task 2: Flow Size Distribution
 
 In this part, you are expected to analyze the flow size distribution of Memcached and Iperf respectively. A flow is defined as a burst of packets sharing the same "five-tuple": source IP address, destination IP address, source TCP/UDP port number, destination TCP/UDP port number, and protocol (TCP or UDP). If two packets sharing the same five-tuple are separated by a sufficient time gap, then these two packets should belong to two different flows. 
 Here we use a default value of 100ms as the time gap.
@@ -122,7 +122,7 @@ Each line represents a packet. For this analysis, you need to understand the fir
 - How many flows are there in memcached and iperf applications respectively? 
 - After gathering flows from iperf and memcached, what is the minimum percentage of flows that take up more than 80\% flow size? What can you conclude after getting the number?
 
-## Task 4: Queue Length Registers
+## Task 3: Queue Length Registers
 
 Heavy hitters can significantly impact the network, causing long latencies of memcached requests. When every packet arrives at a switch, the queue length the packet sees is a significant metric for understanding the impact of heavy hitters and evaluating the congestion in the network. Here you are expected to implement P4 codes to read and store queue lengths, and read average queue lengths from a controller. 
 
@@ -167,7 +167,7 @@ You should modify this file in the following way:
 
 The queue length should be 0 for most of the time, and there could be some spikes on the queue lengths, but the highest average queue length could be as low as 2. It is totally fine if you always get a low number, as long as the number in spikes is larger than 0.
 
-## Task 5: Heavy Hitter Detection
+<!-- ## Task 5: Heavy Hitter Detection
 
 The above analysis is offline: collecting data first and analyze it later. Here, we will explore how to capture useful information online with a p4 program. 
 Your job here is to write a heavy hitter detector to run at the switches. 
@@ -239,10 +239,10 @@ idx2 = crc32(s)
 <!-- - Within the core switch `c1`, what are the heavy hitters and their corresponding flow sizes? Which application are those heavy hitters from?
 - Within the core switch `c2`, what are the heavy hitters and their corresponding flow sizes? Are they the same with those within `c1`? Based on the result, does the ecmp solution make the traffic fully balanced?
 - Within the aggregate switch `a1`, what are the heavy hitters? Are they the same with those within `c1`?
-- Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? -->
+- Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? --> -->
 
 
-## Task 6: Analyze the Congestion
+## Task 4: Analyze the Congestion
 
 In previous part, you can learn there are long tail latencies for some memcached requests. Those long tail latencies come from congestions in the network, which means there is a long queue in some switches, introducing a long queuing delay for memcached request packets.
 
