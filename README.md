@@ -37,6 +37,8 @@ Pcap logging will create several files using the following naming: `<sw_name>-<i
 In a word, by reading those pcap files, you can learn how each packet is forwarded from the source to the destination.
 Those pcap files are recorded in a specific binary format. You could use some pcap parser like `tcpdump` to read it.
 
+**NOTE**: The name of pcap files have 'in' and 'out' to identify whether the packet goes into the switch or goes out of the switch. Please note that the pcap file with 'in' means the packet goes out of the switch, while the file with 'out' means the packet goes in the switch.
+
 ### Wireshark/Tshark:
 
 Another option is to observe the traffic as it flows. For that you can use tools like `tshark` and its GUI version `wireshark`. Wireshark
@@ -239,7 +241,7 @@ idx2 = crc32(s)
 <!-- - Within the core switch `c1`, what are the heavy hitters and their corresponding flow sizes? Which application are those heavy hitters from?
 - Within the core switch `c2`, what are the heavy hitters and their corresponding flow sizes? Are they the same with those within `c1`? Based on the result, does the ecmp solution make the traffic fully balanced?
 - Within the aggregate switch `a1`, what are the heavy hitters? Are they the same with those within `c1`?
-- Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? --> -->
+- Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? -->
 
 
 ## Task 4: Analyze the Congestion
@@ -248,11 +250,11 @@ In previous part, you can learn there are long tail latencies for some memcached
 
 In this part, you need to analyze why there is a congestion in the network. 
 
-**Pick up a problem**. After running the traffic, you can pick a memcached request with 99-percentile tail latency. Record the issue time of the request.
+**Pick up a problem**. After running the traffic, you can pick a memcached packet with 99-percentile tail latency. Record the time when the packet is sent in the network.
 
-**Check routing path**. Using tcpdump reports, you can learn how memcached packets are routed within the network. Record the path. Note that memcached server uses the port number `11211`, and thus packets with either source port number or destination port number `11211` belong to memcached requests.
+**Check routing path**. Using tcpdump reports, you can learn how the packet is routed within the network. Record the path. Note that memcached server uses the port number `11211`, and thus packets with either source port number or destination port number `11211` belong to memcached packets.
 
-**Check the queue length**. You need then to check the queue length of each interface those packets go through. Record the queue length numbers.
+**Check the queue length**. You need then to check the queue length of each interface the packet goes through. Record the queue length numbers.
 
 <!-- You can get average queue length information after reading counters from P4 switches, and you can use the information to detect congestion.  -->
 <!-- After detecting a congestion, you can use packet information from `tcpdump` to find out why there is a congestion.<mark>How do I correlate the two traces? Just based on timestamp?</mark> -->
@@ -271,13 +273,9 @@ In this part, you need to analyze why there is a congestion in the network.
 ### Questions
 
 <!-- - When memcached requests suffer from long latencies, what is happening in the network? <mark>This question is too vauge. Ask more specific questions</mark> -->
-- For the memcached request you pick up, what is the routing path for it?
+- For the memcached packet you pick up, what is the routing path for it?
 - What are the average queue length for each interface those packets go through?
 - What can you conclude from those observations?
-
-### Note
-
-You do not need to very accurate on the time window. If you can find out and analyze a Memcached packet that suffers long latency in the network, that could be fine.
 
 ## Submission and Grading
 

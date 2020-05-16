@@ -32,7 +32,7 @@ CmdIperfClient = {
 }
 
 CmdIperfServer = {
-	'start': 'iperf -s -u -p 5001 >/dev/null 2>&1 &',
+	'start': 'iperf -s -p {port} >/dev/null 2>&1 &',
 	'kill': 'sudo killall iperf 2>/dev/null'
 }
 
@@ -88,7 +88,8 @@ class Experiment:
 	def stop_mc_client(self, host):
 		MnExec(host, CmdMemcachedClient["kill"])
 	def run_iperf_server(self, host):
-		MnExec(host, CmdIperfServer["start"])
+		for port in range(5001, 5017):
+			MnExec(host, CmdIperfServer["start"].format(port = port))
 	def stop_iperf_server(self, host):
 		MnExec(host, CmdIperfServer["kill"])
 	def run_iperf_client(self, host):
@@ -97,33 +98,33 @@ class Experiment:
 		MnExec(host, CmdIperfClient["kill"])
 
 def calc_score(a, b):
-        scorea = 0
-        scoreb = 0
+	scorea = 0
+	scoreb = 0
 
-        # mc_latency = map(float, filter(None, commands.getoutput("cat logs/*_mc.log").split('\n')))
-        # latency_scores = map(lambda x: math.log(x, 10), mc_latency)
-        # if len(latency_scores) > 0:
-        #     scoreb = sum(latency_scores) / len(latency_scores)
-        #     print "Average latency of Memcached Requests:", sum(mc_latency) / len(mc_latency), "(us)"
-        #     print "Average log(latency) of Memcached Requests:", sum(latency_scores) / len(latency_scores)
+	# mc_latency = map(float, filter(None, commands.getoutput("cat logs/*_mc.log").split('\n')))
+	# latency_scores = map(lambda x: math.log(x, 10), mc_latency)
+	# if len(latency_scores) > 0:
+	#     scoreb = sum(latency_scores) / len(latency_scores)
+	#     print "Average latency of Memcached Requests:", sum(mc_latency) / len(mc_latency), "(us)"
+	#     print "Average log(latency) of Memcached Requests:", sum(latency_scores) / len(latency_scores)
 
-        iperf_bps = map(float, filter(None, commands.getoutput("cat logs/*_iperf.log").split('\n')))
-        bps_scores = map(lambda x: math.log(x, 10), iperf_bps)
-        if len(bps_scores) > 0:
-            scorea = sum(bps_scores) / len(bps_scores)
-            print "Average throughput of Iperf Traffic:", sum(iperf_bps) / len(iperf_bps), "(bps)"
-            print "Average log(throughput) of Iperf Traffic:", sum(bps_scores) / len(bps_scores)
+	iperf_bps = map(float, filter(None, commands.getoutput("cat logs/*_iperf.log").split('\n')))
+	bps_scores = map(lambda x: math.log(x, 10), iperf_bps)
+	if len(bps_scores) > 0:
+		scorea = sum(bps_scores) / len(bps_scores)
+		print "Average throughput of Iperf Traffic:", sum(iperf_bps) / len(iperf_bps), "(bps)"
+		print "Average log(throughput) of Iperf Traffic:", sum(bps_scores) / len(bps_scores)
 
-        # print a * scorea - b * scoreb
+	# print a * scorea - b * scoreb
 
 def read_score_config(score_file):
-        with open(score_file, "r") as file:
-                a,b = map(float, file.readlines())
-        return a,b
+	with open(score_file, "r") as file:
+		a,b = map(float, file.readlines())
+	return a,b
 
 def make_log_dir():
-        if os.path.exists('logs'): shutil.rmtree('logs')
-        os.makedirs('logs')
+	if os.path.exists('logs'): shutil.rmtree('logs')
+		os.makedirs('logs')
 
 def parse_hosts(host_string):
 	host_list = []
