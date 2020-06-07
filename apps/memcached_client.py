@@ -12,9 +12,10 @@ class Client:
 	def work(self):
 		for action in self.actions:
 			latency = self.execute(action)
-			print "%lf %.0lf"%(action.time, latency * 1e6) # us
+			print "%lf %lf %.0lf"%((self.start_time + action.time) % 3600, action.time, latency * 1e6) # us
 	def execute(self, action):
-		wait_util(self.start_time + action.time)
+		now = wait_util(self.start_time + action.time)
+                action.time = now - self.start_time
 		if action.func == 0:
 			return measure_time(lambda : self.mc.set(action.key, action.value))
 		else:

@@ -41,6 +41,7 @@ def gen_memcached(host_list, length):
 		burst = np.random.zipf(1.5)
 		if burst > 1000:
 			burst = 1000
+                burst = burst / 500 + 1
 		for i in range(burst):
 			key, value = gen_memcached_trace()
 			memcached_traces.append((next_req, host, key, value))
@@ -78,18 +79,20 @@ def parse_hosts(hosts_string):
 	return host_list
 
 if __name__ == "__main__":
-	if len(sys.argv) != 5:
-		print("usage: python generate_trace.py [hosts running memcached] [hosts running iperf] [trace length (sec)] [trace file name]")
+	if len(sys.argv) != 6:
+		print("usage: python generate_trace.py [hosts running memcached servers] [hosts running memcached] [hosts running iperf] [trace length (sec)] [trace file name]")
 		print("\thosts running memcached: the list of hosts running memcached. If you want to run memcached on h1, h2, h3, h5, h7, h8, type 1-3,5,7-8 here. No space allowed.")
 		print("\thosts running iperf: the format is the same as above.")
 		print("\ttrace length (sec): how long do you want to generate this trace.")
 		print("\ttrace file name: the output trace file name.")
 		exit()
 
-	mc_hosts_string = sys.argv[1]  
-	iperf_hosts_string = sys.argv[2]     
-	length = int(sys.argv[3]) * 1000
+	mc_hosts_server = sys.argv[1]
+	mc_hosts_string = sys.argv[2]  
+	iperf_hosts_string = sys.argv[3]     
+	length = int(sys.argv[4]) * 1000
 
+	mc_server_list = parse_hosts(mc_hosts_server)
 	mc_host_list = parse_hosts(mc_hosts_string)
 	iperf_host_list = parse_hosts(iperf_hosts_string)
 
@@ -102,8 +105,8 @@ if __name__ == "__main__":
 	traces = memcached_traces + iperf_traces
 	traces.sort()
 
-	f = open(sys.argv[4], "w")
-	for i in mc_host_list:
+	f = open(sys.argv[5], "w")
+	for i in mc_server_list:
 		f.write("10.0.0.%d " % i)
 	f.write("\n")
 

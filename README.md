@@ -5,12 +5,13 @@
 * Learn to use the monitoring tools and analyze monitoring data on Mininet and P4. These tools will be useful debugging tools for your future projects. 
 * Run monitoring tools	
 	- Getting latency from applications.
-	- Getting flow size distribution through tcpdump.
+	<!-- - Getting flow size distribution through tcpdump. -->
+	- Getting packet latencies from tcpdump.
 	- Getting traffic rate information through tcpdump.
-	- Getting queue length through P4 registers. Understand the overhead associated with getting the registers.
-	- Implement the counting bloom filter algorithm in P4.
+	- Getting queue length through P4 registers. 
+	<!-- - Implement the counting bloom filter algorithm in P4. -->
 * Analyze the monitoring data
-	- Why do we get high queue length at times?
+	- Why do we get high tail latencies at times?
 
 ## Getting Started
 
@@ -59,7 +60,25 @@ To capture traffic with tcpdump run (shows link-layer information and does not r
 sudo tcpdump -enn -i <interface_name> > <output file>
 ```
 
-The output of tcpdump is in plain text. Like pcap files, the output of tcpdump also includes all packets arriving to the interface.
+The output of tcpdump is in plain text. Like pcap files, the output of tcpdump also includes all packets arriving to the interface. Here is a brief introduction for the tcpdump item format:
+
+For ICMP packet, the format is like this
+
+```
+19:35:11.688159 00:00:00:02:01:00 > 00:00:0a:00:00:02, ethertype IPv4 (0x0800), length 98: 10.0.0.11 > 10.0.0.2: ICMP echo request, id 3036, seq 1, length 64
+```
+Where the fields are *timestamp*, *source mac address > destination mac address*, *ethernet type*, *packet length*, *source IP address > destination IP address*, *ICMP packet type*, ...
+
+For TCP packet, the format is like this
+
+```
+20:38:28.315819 00:00:00:02:01:00 > 00:00:0a:00:00:02, ethertype IPv4 (0x0800), length 9514: 10.0.0.3.34078 > 10.0.0.2.5002: Flags [.], seq 793632:803080, ack 1, win 56, options [nop,nop,TS val 1335200 ecr 1333906], length 9448
+20:38:28.400434 00:00:00:02:01:00 > 00:00:0a:00:00:02, ethertype IPv4 (0x0800), length 66: 10.0.0.15.40798 > 10.0.0.2.5014: Flags [.], ack 2, win 56, options [nop,nop,TS val 1335242 ecr 1333990], length 0
+```
+
+Where the fields are *timestamp*, *source mac address > destination mac address*, *ethernet type*, *packet length*, *source IP address:TCP port > destination IP address:TCP port*, *TCP flags*, *sequence number/ack number*, ...
+
+Other packets have similar formats.
 
 <!-- ## Task 1: Implementing UDP and ICMP
 
@@ -71,30 +90,45 @@ We provide you with headers of UDP protocol and ICMP protocol in `p4src/include/
 
 ## Task 1: Analyze the Latency of Applications
 
-You are going to analyze the latency of applications in this task.
+You are going to analyze the latency of Memcached applications in this task.
 
-In this part, we focus on the latency of memcached requests and understand the latency changes when these requests coexist with iperf flows. Please take the following steps. **Note that from now on, we are running `iperf` using UDP**.
+In this part, we focus on the latency of memcached requests and understand the latency changes when these requests coexist with incast flows. Please take the following steps. 
 
-**Application trace**. You need to use `apps/trace/generate_trace.py` to create iperf application traces and memcached traces.
-This time you need to generate Memcached traces on host `h1` and `h5`, and generate iperf traces on host `h1-h8`, for 60 seconds. Name it **trace1.txt**.
-
-**Note**
-- Iperf using UDP will send traffic as fast as possible, which can make full use of the link bandwidth. Memcached will only send a small flow each time, which takes little link bandwidth.
-- The trace generator script will generate memcached requests in bursts, where each burst could be at most 1000 requests. The script will generate iperf requests intermittently, and each request could last from 1s to 8s. During the iperf request, iperf will try to make full use of the link bandwidth.
+**Application trace**. We provide you with a trace named `apps/trace/mc.trace`, which runs memcached servers on `h2-h16`, and runs a memached client on `h1`. The client will send a memcached request every 0.1 second. After running the trace, the latency of each memcached request will be logged in `logs/h1_mc.log` file.
 
 **Run:** Run the Mininet using the fattree topology `topology/p4app_fat.json` from the last project. Then run the ecmp controller `controller/controller_fat_ecmp.py`.
-Next, send the traffic using the trace file just created.
+```
+# Terminal 1
+sudo p4run --conf topology/p4app_fat.json
+```
+```
+# Terminal 2
+python controller/controller_fat_ecmp.py
+```
+Next, send the incast flows using our bash script
+```
+sudo bash apps/run_incase.sh
+```
+After the messages are printed, then run the trace.
+```
+sudo python apps/send_traffic.py apps/trace/mc.trace 1-16 60
+```
+After running the trace, kill the incast flow sender.
+```
+sudo pkill tg
+```
 
-**Latency logs:** After running the trace, you can get latency from the `./logs` directory. You can find files looking like `hX_mc.log`, where each line represents the latency for one request.
+**Latency logs:** After running the trace, you can get latency from the `./logs` directory. You can find files looking like `h1_mc.log`, where each line represents the latency for one request.
 
 ### Questions
 
 - Draw the CDF figure for all latencies of memcached requests. Name it `report/latency_cdf.pdf(png)`.
 - What is the medium latency? What is the 99-th percentile tail latency for memcached respectively?
-- Why do you think memcached has a long tail latency?
+- Why do you think memcached has a long tail latency? Please use a single sentence to describe your reason.
 
 **Note: We highly encourage you to write scripts for each step of your analysis and write scripts to generate figures. This will allow you to reuse these analysis for debugging your future projects. To make a clean directory structure, please put all your tool codes under the `./tools` directory.**
 
+<!-- <mark>Delete?</mark>
 ## Task 2: Flow Size Distribution
 
 In this part, you are expected to analyze the flow size distribution of Memcached and Iperf respectively. A flow is defined as a burst of packets sharing the same "five-tuple": source IP address, destination IP address, source TCP/UDP port number, destination TCP/UDP port number, and protocol (TCP or UDP). If two packets sharing the same five-tuple are separated by a sufficient time gap, then these two packets should belong to two different flows. 
@@ -122,9 +156,66 @@ Each line represents a packet. For this analysis, you need to understand the fir
 - For each application what is the average and medium? flow size respectively? And what is the average and medium flow completion time?
 - What is the average and medium packet size of iperf and memcached flows respectively?
 - How many flows are there in memcached and iperf applications respectively? 
-- After gathering flows from iperf and memcached, what is the minimum percentage of flows that take up more than 80\% flow size? What can you conclude after getting the number?
+- After gathering flows from iperf and memcached, what is the minimum percentage of flows that take up more than the 80\% traffic size? What can you conclude after getting the number? Please use a single sentence to describe your conclusion. -->
 
-## Task 3: Queue Length Registers
+## Task 2: Queue Length
+
+The key concept impacting the latency of memcached requests is the queue length. Each interface (port) of switches has a queue to buffer packets, in order to tolerate the sudden increase in the traffic rate. However, a long queue in a switch could significantly increase the latency of a packet. In this task, you are expected to read the longest queue length along the path of a packet, and add this information in an additional packet header.
+
+### Probe Packets
+
+We do not expect switches to add queue information to all packets, because it could not only increase the overhead of the switches, but also make those packets unrecognized by the hosts (since we add another packet header that should not exist). Therefore, we send a few "probe packets", that are sent and received by our probe applications, to detect the queue information.
+We provide you with the probe sender and the probe receiver. The probe sender will send one packet periodically, and the probe packet will be processed by switches, and finally sent to the probe receiver. The probe receiver will get the longest queue length and write it to the log.
+
+### Adding Telemetry Header
+
+When the probe packet is sent to the first switch from the host, the switch should add a telemetry header to the packet. Here are what you need to do:
+
+1. Create a header struct named `telemetry_t`, which contains 16-bit queue length, and 16-bit next header type.
+2. Define ethernet type `TYPE_TELE` as `0x7777`, which is used to represent the telemetry header.
+3. Modify the parser. If the telemetry header exists, the parser should parse ethernet header first, then the telemetry header, and then later headers including the IP header, the TCP header, *e.t.c.*
+4. Modify the deparser.
+5. In the egress pipeline, set telemetry header valid if 
+	- The telemetryheader is invalid, and
+	- The TCP port number is 7777.
+Then record the largest queue length along the path. The queue length is stored in `standard_metadata.enq_qdepth`.
+
+### Test Your Solution
+
+1. Run your topology.
+2. We provide you with a script `apps/run_probe.sh`, which will run a probe received on `h1`, and run one probe sender on `h2-h16`. The queue length will be stored in `report/qlen.txt`.
+	```
+	sudo bash apps/run_probe.sh
+	```
+3. Open another terminal, run the incast traffic
+	```
+	sudo bash apps/run_incast.sh
+	```
+4. After seeing the message, open another terminal, run the traffic trace
+	```
+	sudo python apps/send_traffic.py apps/trace/mc.trace 1-16 60
+	```
+5. After running the traffic, press `CTRL-C` to close probe receiver and probe sender, and run the following command to close the incast traffic generator.
+	```
+	sudo pkill tg
+	```
+6. Check `tools/qlen.txt` to get the queue lengths.
+
+### Question
+
+- Draw a figure to show the longest queue lengths. The x axis is the time, and the y axis is the longest queue length. Name the figure `report/qlen.pdf(png)`.
+- Draw a figure to show the input traffic rate of the interface `t1-eth1` using the tcpdump results. The x axis is the time, and the y axis is the traffic rate (using `Mbps` as the unit). Measure the input traffic rate for every 0.1 second. Name the figure `report/rate.pdf(png)`. 
+- Draw a figure to show the latency of memcached requests. The x axis is the time, and the y axis is the latency. Name it `report/mc_req.pdf(png)`.
+- Use tcpdump to collect all the memcached packet latencies, and draw a figure to show the latency of all those memcached packets. The x axis is the time, and the y axis is the latency. Name it `report/mc_pkt.pdf(png)`. 
+- Compare the figure of queue length and that of traffic rate, and answer the question: what is the correlation between the queue length and the traffic rate? Use a single sentence to describe it.
+- Compare the figure of latency and queue length, and answer the question: what is the correlation between the queue length and the latency? Use a single sentence to describe it.
+
+**Note**:
+1. Be careful that the tcpdump will dump all input packets and output packets for that interface, but we only care about the input packets because we care about the input traffic rate.
+2. Memcached server uses the port number `11211`, and thus packets with either source port number or destination port number `11211` belong to memcached packets.
+3. Packet latency is not the request latency (flow latency).
+
+<!-- ## Task 3: Queue Length Registers
 
 Heavy hitters can significantly impact the network, causing long latencies of memcached requests. When every packet arrives at a switch, the queue length the packet sees is a significant metric for understanding the impact of heavy hitters and evaluating the congestion in the network. Here you are expected to implement P4 codes to read and store queue lengths, and read average queue lengths from a controller. 
 
@@ -151,7 +242,7 @@ You should modify this file in the following way:
 
 **Trace**. Use trace file **trace1.txt**.
 
-**Run**. Run the trace using `apps/send_traffic.py`.
+**Run**. First run `python tools/read_stats.py` to let it polls for the queue lengths. Then you can run the trace using `apps/send_traffic.py`. After running the trace, you can stop the `read_stats.py` script to get the numbers.
 
 **Tcpdump**. Use tcpdump to monitor interface `t1-eth1`, and save the result to files. You can choose the name of those files, we are not going to grade on them. 
 
@@ -161,13 +252,13 @@ You should modify this file in the following way:
 
 - Draw figures to show the average queue lengths of the interface `t1-eth1`. The x axis is the time, and the y axis is the average queue length or the bandwidth during the period. Name the figure `report/qlen_eth1.pdf(png)`.
 - Draw figures to show the input traffic rate of the interface `t1-eth1` using the tcpdump results. The x axis is the time, and the y axis is the traffic rate (using `Mbps` as the unit). Measure the input traffic rate for every 0.1 second. Name the figure `report/tr_eth1.pdf(png)`. **Be careful that the tcpdump will dump all input packets and output packets for that interface, but we only care about the input packets because we care about the input traffic rate**.
-- Compare the figure of queue length and that of traffic rate, and answer the question: what is the correlation between the queue length and the traffic rate?
+- Compare the figure of queue length and that of traffic rate, and answer the question: what is the correlation between the queue length and the traffic rate? Use a single sentence to describe it.
 - Draw figures to show the latency of memcached on `h1`. The x axis is the time, and the y axis is the latency. Name it `report/lat_h1.pdf(png)`.
-- Compare the figure of latency and queue length, and answer the question: what is the correlation between the queue length and the latency?
+- Compare the figure of latency and queue length, and answer the question: what is the correlation between the queue length and the latency? Use a single sentence to describe it.
 
 ### Note
 
-The queue length should be 0 for most of the time, and there could be some spikes on the queue lengths, but the highest average queue length could be as low as 2. It is totally fine if you always get a low number, as long as the number in spikes is larger than 0.
+The queue length should be 0 for most of the time, and there could be some spikes on the queue lengths, but the highest average queue length could be as low as 2. It is totally fine if you always get a low number, as long as the number in spikes is larger than 0. -->
 
 <!-- ## Task 5: Heavy Hitter Detection
 
@@ -244,17 +335,17 @@ idx2 = crc32(s)
 - Within the ToR switch `t1`, what are the heavy hitters? Which host are those heavy hitters from? -->
 
 
-## Task 4: Analyze the Congestion
+## Task 3: Analyze the Congestion
 
 In previous part, you can learn there are long tail latencies for some memcached requests. Those long tail latencies come from congestions in the network, which means there is a long queue in some switches, introducing a long queuing delay for memcached request packets.
 
 In this part, you need to analyze why there is a congestion in the network. 
 
-**Pick up a problem**. After running the traffic, you can pick a memcached packet with 99-percentile tail latency. Record the time when the packet is sent in the network.
+**Pick up a problem**. After running the traffic, you can use tcpdump to get the flow latency of all memcached flows. Pick a memcached flow with 99-percentile tail latency. Record the time when the packets of the flow are sent in the network.
 
-**Check routing path**. Using tcpdump reports, you can learn how the packet is routed within the network. Record the path. Note that memcached server uses the port number `11211`, and thus packets with either source port number or destination port number `11211` belong to memcached packets.
+**Check routing path**. Using tcpdump reports, you can learn how those packets are routed within the network. Record the path. 
 
-**Check the queue length**. You need then to check the queue length of each interface the packet goes through. Record the queue length numbers.
+**Analyze the long latency**. You need to use the information from the pcap files, the queue length, the probe packets, to analyze why the flow experience a long latency.
 
 <!-- You can get average queue length information after reading counters from P4 switches, and you can use the information to detect congestion.  -->
 <!-- After detecting a congestion, you can use packet information from `tcpdump` to find out why there is a congestion.<mark>How do I correlate the two traces? Just based on timestamp?</mark> -->
@@ -273,9 +364,8 @@ In this part, you need to analyze why there is a congestion in the network.
 ### Questions
 
 <!-- - When memcached requests suffer from long latencies, what is happening in the network? <mark>This question is too vauge. Ask more specific questions</mark> -->
-- For the memcached packet you pick up, what is the routing path for it?
-- What are the average queue length for each interface those packets go through?
-- What can you conclude from those observations?
+- For the memcached flow you pick up, what is the routing path for it?
+- Why the flow experiences a long latency?
 
 ## Submission and Grading
 
@@ -283,13 +373,13 @@ In this part, you need to analyze why there is a congestion in the network.
 
 <!-- - The heavy hitter detection and queue length register implementation in `p4src/ecmp.p4` in `ecmp` topology directory. -->
 - All the plotted figures. It requires you to plot those figures on your own. Please put all figures in `report` directory. 
-- The queue length registers and heavy hitter detection implementation in `p4src/ecmp.p4`.
-- Two register readers `tools/read_stats.py` and `tools/read_hh.py`.
+- The telemetry header implementation in `p4src/ecmp.p4`.
+<!-- - Two register readers `tools/read_stats.py` and `tools/read_hh.py`. -->
 - Answer the questions in the file `report/report.txt`. Please also include the meaning for each figure you draw in this file. (We can hardly understand the figure by only looking at the file name.)
 
 ### Grading
 
-- *40*: the implementation of registers and heavy hitters, as well as the two register readers.
+- *40*: the implementation of the telemetry header.
 - *20*: plotted figures.
 - *40*: answer the questions.
 

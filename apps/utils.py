@@ -9,6 +9,7 @@ def measure_time(func):
 def wait_util(t):
 	now = time.time()
 	if now >= t:
-		return
+		return now
 	time.sleep(t - now)
+        return t
 

@@ -36,6 +36,16 @@ CmdIperfServer = {
 	'kill': 'sudo killall iperf 2>/dev/null'
 }
 
+# CmdIperfClient = {
+# 	'start': './apps/traffic-gen/bin/tg-client -c {config} >/dev/null 2>/dev/null &',
+# 	'kill': 'sudo pkill "python apps/iperf_client.py" 2>/dev/null'
+# }
+
+# CmdIperfServer = {
+# 	'start': './apps/traffic-gen/bin/tg-server -p {port} >/dev/null 2>&1 &',
+# 	'kill': 'sudo pkill tg-server 2>/dev/null'
+# }
+
 def MnExec(hostName, command):
 	cmd = '%s %s %s' % (MN_UTIL, hostName, command)
 	os.system(cmd)
@@ -58,10 +68,10 @@ class Experiment:
 			# host = "h%d"%(i+1)
 			self.run_mc_server(host)
 			self.run_iperf_server(host)
-		print "wait 1 sec for iperf and memcached servers to start"
-		time.sleep(1)
+		print "wait 10 sec for iperf and memcached servers to start"
+		time.sleep(10)
 		print "start iperf and memcached clients"
-		self.start_time = int(now) + 3
+		self.start_time = now + 13
 		for host in self.hosts:
 			# host = "h%d"%(i+1)
 			self.run_mc_client(host)
@@ -88,8 +98,7 @@ class Experiment:
 	def stop_mc_client(self, host):
 		MnExec(host, CmdMemcachedClient["kill"])
 	def run_iperf_server(self, host):
-		for port in range(5001, 5017):
-			MnExec(host, CmdIperfServer["start"].format(port = port))
+		MnExec(host, CmdIperfServer["start"])
 	def stop_iperf_server(self, host):
 		MnExec(host, CmdIperfServer["kill"])
 	def run_iperf_client(self, host):
@@ -124,7 +133,7 @@ def read_score_config(score_file):
 
 def make_log_dir():
 	if os.path.exists('logs'): shutil.rmtree('logs')
-		os.makedirs('logs')
+	os.makedirs('logs')
 
 def parse_hosts(host_string):
 	host_list = []

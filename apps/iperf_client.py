@@ -28,9 +28,9 @@ class IperfClient:
 	def execute(self, traffic, q):
 		byte = 0
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# port = random.randint(5001, 5100)
+		# port = random.randint(5001, 5016)
 		addr = (traffic.dst_ip, PORT)
-		PORT += 1
+		# PORT += 1
 		sock.connect(addr)
 		# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		# addr = (traffic.dst_ip, PORT)
@@ -54,12 +54,12 @@ def read_traffic_file(host_name, traffic_file):
 	with open(traffic_file, "r") as file:
 		lines = file.readlines()
 		for line in lines[1:]:
-			tokens = line.strip().split(' ') # host_name, time, func, dst_ip, duration
+			tokens = line.strip().split(' ') # host_name, time, func, dst_ip, duration, port
 			if tokens[0] != host_name:
 				continue
 			if tokens[2] != '2': # filter out non-iperf traffic
 				continue
-			traffics.append(IperfTrace(float(tokens[1]), tokens[3], float(tokens[4])))
+			traffics.append(IperfTrace(float(tokens[1]), tokens[3], float(tokens[4]), int(tokens[5])))
 	return traffics
 
 if __name__ == "__main__":
